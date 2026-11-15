@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Investment Portfolio Optimizer using 0/1 Knapsack with Branch and Bound. Pick the best projects under a budget.">
+<title>Portfolio Optimizer | Knapsack + Branch &amp; Bound</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">💼</div>
+    <div>
+      <h1>Portfolio Optimizer</h1>
+      <p>0/1 Knapsack with Branch &amp; Bound · Unit IV Case Study</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="ghost" id="btnHelp">❓ How it works</button>
+    <button class="ghost" id="btnTheme" title="Toggle theme">🌙 / ☀️</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- 1. SETUP -->
+  <section class="card">
+    <h2><span class="step">1</span> Set your budget and projects</h2>
+
+    <div class="presets">
+      <span class="muted">Quick start:</span>
+      <button class="chip" data-preset="company">🏢 Company</button>
+      <button class="chip" data-preset="startup">🚀 Startup</button>
+      <button class="chip" data-preset="college">🎓 College fest</button>
+      <button class="chip" data-preset="farm">🌾 Farmer</button>
+      <button class="chip" data-preset="ngo">🤝 NGO</button>
+      <button class="chip" data-preset="random">🎲 Random</button>
+    </div>
+
+    <div class="grid-setup">
+      <div><label for="budget">Total budget</label><input id="budget" type="number" min="1" step="1" value="50"></div>
+      <div><label for="unit">Unit label</label><input id="unit" type="text" maxlength="6" value="L" placeholder="L, K, Cr"></div>
+      <div class="check">
+        <label><input type="checkbox" id="avoidHigh"> Avoid high-risk projects</label>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr><th>#</th><th>Project</th><th>Category</th><th>Risk</th><th>Cost</th><th>Return</th><th>Lock</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <button class="primary" id="btnSolve">▶ Optimize Portfolio</button>
+      <button id="btnAdd">+ Add project</button>
+      <button class="ghost" id="btnClear">Clear</button>
+      <span class="spacer"></span>
+      <button class="ghost" id="btnImport">⬆ Import CSV / JSON</button>
+      <input type="file" id="fileIn" accept=".csv,.json" hidden>
+    </div>
+    <p class="hint">Lock: <b>Auto</b> = algorithm decides · <b>Must</b> = always include · <b>Skip</b> = never include. Cost and Return are whole numbers.</p>
+    <div class="msg" id="msg" role="alert"></div>
+  </section>
+
+  <!-- RESULTS (hidden until solved) -->
+  <div id="results" hidden>
+
+    <section class="card">
+      <h2><span class="step">2</span> Best portfolio</h2>
+      <div class="kpis" id="kpis"></div>
+      <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+      <p class="hint" id="meterTxt"></p>
+      <div class="table-wrap">
+        <table id="resTbl">
+          <thead><tr><th>Decision</th><th>Project</th><th>Category</th><th>Risk</th><th>Cost</th><th>Return</th><th>Return per 1</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button id="btnCopy">📋 Copy summary</button>
+        <button id="btnCsv">⬇ Download CSV</button>
+        <button id="btnJson">⬇ Save project (JSON)</button>
+        <button id="btnPrint">🖨 Print / PDF report</button>
+      </div>
+    </section>
+
+    <section class="card two">
+      <div>
+        <h2>Where the money goes</h2>
+        <div id="donut"></div>
+      </div>
+      <div>
+        <h2>Cost vs return per project</h2>
+        <div id="bars"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">3</span> Is it really better than simple methods?</h2>
+      <div class="table-wrap"><table id="cmpTbl"></table></div>
+      <p class="hint" id="cmpNote"></p>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">4</span> Budget advisor</h2>
+      <div class="advice" id="advice"></div>
+      <p class="hint">The red dot is your current budget. Flat parts of the line mean extra money buys nothing better.</p>
+      <div id="curve" class="chart-scroll"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">5</span> Branch &amp; Bound in action</h2>
+      <div class="kpis small" id="effKpis"></div>
+      <div class="btn-row">
+        <button class="primary" id="aPlay">▶ Play</button>
+        <button id="aStep">Step ▸</button>
+        <button id="aAll">Show all</button>
+        <button class="ghost" id="aReset">↺ Reset</button>
+        <label class="speed">Speed <input type="range" id="aSpeed" min="1" max="10" value="5"></label>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c-explore)"></i>explored</span>
+        <span><i style="background:var(--c-prune)"></i>pruned (bound ≤ best)</span>
+        <span><i style="background:var(--c-bad)"></i>over budget</span>
+        <span><i style="background:var(--c-ok)"></i>optimal path</span>
+        <span>solid = take · dashed = skip</span>
+      </div>
+      <div class="log" id="aLog">Press Play to watch the algorithm search.</div>
+      <div id="tree" class="chart-scroll"></div>
+      <p class="hint" id="treeNote"></p>
+    </section>
+
+  </div>
+</main>
+
+<!-- HELP DIALOG -->
+<dialog id="help">
+  <h3>How the algorithm works</h3>
+  <ol>
+    <li><b>Sort</b> projects by return per cost (best value first).</li>
+    <li><b>Branch:</b> for each project make two choices, <i>take</i> it or <i>skip</i> it. This builds a decision tree.</li>
+    <li><b>Bound:</b> for each branch, compute the best return it could possibly reach (fill the budget, allowing a fraction of the last project).</li>
+    <li><b>Prune:</b> if that bound cannot beat the best portfolio already found, throw the whole branch away. If a branch goes over budget, drop it too.</li>
+    <li>The best portfolio left at the end is <b>optimal</b>, and it is double-checked with Dynamic Programming.</li>
+  </ol>
+  <p class="hint">Brute force checks all 2ⁿ combinations. Branch &amp; Bound reaches the same answer while skipping most of them.</p>
+  <button class="primary" id="helpClose">Got it</button>
+</dialog>
+
+<footer>Built with HTML, CSS and JavaScript · No libraries, no server · Open <code>index.html</code> and it works</footer>
+
+<script src="solver.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
